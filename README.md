@@ -1,6 +1,6 @@
-# typescript-action [![ts](https://github.com/int128/typescript-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/typescript-action/actions/workflows/ts.yaml)
+# reduce-action [![ts](https://github.com/int128/reduce-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/reduce-action/actions/workflows/ts.yaml)
 
-This is a template of TypeScript Action.
+This is an action to reduce paths by changed files in a pull request.
 
 
 ## Getting Started
@@ -13,21 +13,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: int128/typescript-action@v1
+      - uses: int128/reduce-action@v1
+        id: reduce
         with:
-          name: hello
+          paths: |
+            clusters/:cluster/:component/**
+          transform: |
+            kustomization=clusters/:cluster/:component/kustomization.yaml
+      - uses: int128/kustomize-action@v1
+        with:
+          kustomization: ${{ steps.reduce.outputs.kustomization }}
 ```
 
 
 ## Inputs
 
-| Name | Required | Default | Description
-|------|----------|---------|------------
-| `name` | `true` | - | example input
+TODO
 
 
 ## Outputs
 
-| Name | Description
-|------|------------
-| `example` | example output
+This action sets the keys defined in `transform`.
