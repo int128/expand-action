@@ -1,5 +1,5 @@
-name: reduce
-description: reduce paths by changed files in a pull request
+name: expand
+description: expand path patterns by changed files in a pull request
 inputs:
   paths:
     description: paths to match (multiline)
