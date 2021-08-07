@@ -36,10 +36,14 @@ jobs:
       - run: yarn build
       - run: yarn package
 
-      - name: e2e-test
-        uses: ./
+      - uses: ./
+        id: reduce
         with:
           paths: |
-            .github/workflows/:workflow
+            :dir/**
           transform: |
-            workflow=:workflow
+            dir=:dir
+      - run: |
+          cat <<EOF
+          ${{ toJSON(steps.reduce.outputs) }}
+          EOF
