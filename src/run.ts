@@ -5,7 +5,7 @@ import * as match from './match'
 
 type Inputs = {
   paths: string[]
-  pathsAlways: string[]
+  pathsFallback: string[]
   transform: Transform
   token: string
 }
@@ -51,8 +51,8 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent): Promise<O
   const changedFiles = listFiles.map((f) => f.filename)
   core.info(`Received a list of ${changedFiles.length} files`)
 
-  if (match.match(inputs.pathsAlways, changedFiles)) {
-    core.info(`paths-always matches to the changed files`)
+  if (match.match(inputs.pathsFallback, changedFiles)) {
+    core.info(`paths-fallback matches to the changed files`)
     return fallbackToWildcard(inputs.transform)
   }
 

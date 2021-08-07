@@ -4,7 +4,7 @@ inputs:
   paths:
     description: paths to match (multiline)
     required: true
-  paths-always:
+  paths-fallback:
     description: paths to fallback to wildcard (multiline)
     required: true
   transform:

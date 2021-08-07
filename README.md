@@ -93,7 +93,7 @@ For example, if the following path patterns are given,
 ```yaml
 paths: |
   :service/manifest/**
-paths-always: |
+paths-fallback: |
   conftest/**
 transform: |
   :service/manifest/kustomization.yaml
@@ -172,7 +172,7 @@ and finally this action sets an output to `clusters/staging/cluster-autoscaler/k
 | Name | Default | Description
 |------|---------|------------
 | `paths` | required | Paths to expand
-| `paths-always` | empty | If any path is changed, fallback to wildcard
+| `paths-fallback` | empty | If any path is changed, fallback to wildcard
 | `transform` | required | Paths in outputs in form of `NAME=PATH`
 | `token` | `github.token` | GitHub token to list files
 
