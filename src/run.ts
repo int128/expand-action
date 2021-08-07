@@ -6,25 +6,23 @@ import * as match from './match'
 type Inputs = {
   paths: string[]
   pathsFallback: string[]
-  transform: Transform
+  outputsMap: Map<string, string>
   token: string
 }
 
 type Outputs = {
-  variables: Map<string, string>
+  map: Map<string, string>
 }
-
-type Transform = Map<string, string>
 
 export const run = async (inputs: Inputs): Promise<Outputs> => {
   core.info(`eventName: ${github.context.eventName}`)
-  core.info(`transform: ${JSON.stringify([...inputs.transform], undefined, 2)}`)
+  core.info(`outputs: ${JSON.stringify([...inputs.outputsMap], undefined, 2)}`)
 
   if (github.context.eventName === 'pull_request') {
     return await handlePullRequest(inputs, github.context.payload as PullRequestEvent)
   }
   core.info(`Fallback to wildcards`)
-  return fallbackToWildcard(inputs.transform)
+  return fallbackToWildcard(inputs.outputsMap)
 }
 
 const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent): Promise<Outputs> => {
@@ -33,7 +31,7 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent): Promise<O
   // limit the max number of changed files to prevent GitHub API rate limit
   if (e.pull_request.changed_files > 1000) {
     core.info(`Fallback to wildcards due to too many changed files`)
-    return fallbackToWildcard(inputs.transform)
+    return fallbackToWildcard(inputs.outputsMap)
   }
 
   core.info(`List files in the pull request`)
@@ -53,34 +51,34 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent): Promise<O
 
   if (match.match(inputs.pathsFallback, changedFiles)) {
     core.info(`paths-fallback matches to the changed files`)
-    return fallbackToWildcard(inputs.transform)
+    return fallbackToWildcard(inputs.outputsMap)
   }
 
   core.info(`Transform paths by the changed files`)
   const groups = match.exec(inputs.paths, changedFiles)
-  const outputVariables = new Map<string, string>()
-  for (const [k, v] of inputs.transform) {
+  const map = new Map<string, string>()
+  for (const [k, v] of inputs.outputsMap) {
     const p = match.transform(v, groups)
-    outputVariables.set(k, p.join('\n'))
+    map.set(k, p.join('\n'))
   }
-  return { variables: outputVariables }
+  return { map }
 }
 
-const fallbackToWildcard = (transform: Map<string, string>): Outputs => {
-  const outputVariables = new Map<string, string>()
-  for (const [k, v] of transform) {
+const fallbackToWildcard = (outputsMap: Map<string, string>): Outputs => {
+  const map = new Map<string, string>()
+  for (const [k, v] of outputsMap) {
     const p = match.transformToWildcard(v)
-    outputVariables.set(k, p.join('\n'))
+    map.set(k, p.join('\n'))
   }
-  return { variables: outputVariables }
+  return { map }
 }
 
-export const parseTransform = (transform: string[]): Transform => {
+export const parseOutputs = (outputs: string[]): Map<string, string> => {
   const m = new Map<string, string>()
-  for (const t of transform) {
+  for (const t of outputs) {
     const i = t.indexOf('=')
     if (i < 0) {
-      throw new Error(`transform must be in form of NAME=PATTERN but was ${t}`)
+      throw new Error(`outputs must be in form of NAME=PATH but was ${t}`)
     }
     const k = t.substring(0, i)
     const v = t.substring(i + 1)

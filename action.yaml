@@ -2,13 +2,13 @@ name: expand
 description: expand path patterns by changed files in a pull request
 inputs:
   paths:
-    description: paths to match (multiline)
+    description: paths to expand (multiline)
     required: true
   paths-fallback:
     description: paths to fallback to wildcard (multiline)
     required: true
-  transform:
-    description: paths to transform (multiline)
+  outputs:
+    description: paths to set into outputs in form of NAME=PATH (multiline)
     required: true
   token:
     description: GitHub token to list files

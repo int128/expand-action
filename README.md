@@ -59,8 +59,8 @@ For example, if the following path patterns are given,
 ```yaml
 paths: |
   :service/manifest/**
-transform: |
-  :service/manifest/kustomization.yaml
+outputs: |
+  kustomization=:service/manifest/kustomization.yaml
 ```
 
 and the following file is changed in a pull request,
@@ -95,8 +95,8 @@ paths: |
   :service/manifest/**
 paths-fallback: |
   conftest/**
-transform: |
-  :service/manifest/kustomization.yaml
+outputs: |
+  kustomization=:service/manifest/kustomization.yaml
 ```
 
 and the following file is changed in a pull request,
@@ -141,7 +141,7 @@ jobs:
         with:
           paths: |
             clusters/:cluster/:component/**
-          transform: |
+          outputs: |
             kustomization=clusters/:cluster/:component/kustomization.yaml
       - uses: int128/kustomize-action@v1
         with:
@@ -173,11 +173,11 @@ and finally this action sets an output to `clusters/staging/cluster-autoscaler/k
 |------|---------|------------
 | `paths` | required | Paths to expand
 | `paths-fallback` | empty | If any path is changed, fallback to wildcard
-| `transform` | required | Paths in outputs in form of `NAME=PATH`
+| `outputs` | required | Paths to set into outputs in form of `NAME=PATH`
 | `token` | `github.token` | GitHub token to list files
 
 
 
 ## Outputs
 
-This action sets the names defined by `transform` in inputs.
+This action sets the names defined by `outputs` in inputs.
