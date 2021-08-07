@@ -1,15 +1,15 @@
 import * as core from '@actions/core'
-import { parseTransform, run } from './run'
+import { parseOutputs, run } from './run'
 
 const main = async (): Promise<void> => {
   try {
     const outputs = await run({
       paths: core.getMultilineInput('paths', { required: true }),
       pathsFallback: core.getMultilineInput('paths-fallback'),
-      transform: parseTransform(core.getMultilineInput('transform', { required: true })),
+      outputsMap: parseOutputs(core.getMultilineInput('outputs', { required: true })),
       token: core.getInput('token', { required: true }),
     })
-    for (const [k, v] of outputs.variables) {
+    for (const [k, v] of outputs.map) {
       core.startGroup(`Set output ${k}`)
       core.setOutput(k, v)
       core.info(v)

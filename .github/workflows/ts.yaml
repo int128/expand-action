@@ -41,7 +41,7 @@ jobs:
         with:
           paths: |
             :dir/**
-          transform: |
+          outputs: |
             dir=:dir
       - run: |
           cat <<EOF
