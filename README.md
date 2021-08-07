@@ -48,15 +48,71 @@ For example,
 - Policy test for Kubernetes manifests
 - Security test with common rules
 
-It takes a long time to process all modules if there are many modules in a monorepo.
+It takes a long time to process all modules if a monorepo has many modules.
 
-### Solution
+### Idea
 
 This action expands path patterns by changed files in a pull request.
+
+For example, if the following path patterns are given,
+
+```yaml
+paths: |
+  :service/manifest/**
+transform: |
+  :service/manifest/kustomization.yaml
+```
+
+and the following file is changed in a pull request,
+
+```
+microservice1/manifest/deployment.yaml
+```
+
+this action determines the path variable as follows:
+
+```
+":service" => "microservice1"
+```
+
+Finally this action expands the pattern as follows:
+
+```
+microservice1/manifest/kustomization.yaml
+```
+
 It reduces a number of modules to process in a workflow.
 
+### Consideration
 
-## Getting Started
+It may need to inspect all modules if a specific file is changed, such as a common policy.
+This action supports "fallback" path pattern.
+
+For example, if the following path patterns are given,
+
+```yaml
+paths: |
+  :service/manifest/**
+paths-always: |
+  conftest/**
+transform: |
+  :service/manifest/kustomization.yaml
+```
+
+and the following file is changed in a pull request,
+
+```
+conftest/policy/foo.rego
+```
+
+this action fallbacks to wildcard, that is, replaces a path variable with `*`, as follows:
+
+```
+*/manifest/kustomization.yaml
+```
+
+
+## Examples
 
 ### Usecase: build manifests against changed paths
 
@@ -115,9 +171,9 @@ and finally this action sets an output to `clusters/staging/cluster-autoscaler/k
 
 | Name | Default | Description
 |------|---------|------------
-| `paths` | required | paths to expand
-| `paths-always` | empty | paths to fallback to wildcard
-| `transform` | required | paths to transform in form of `NAME=PATH`
+| `paths` | required | Paths to expand
+| `paths-always` | empty | If any path is changed, fallback to wildcard
+| `transform` | required | Paths in outputs in form of `NAME=PATH`
 | `token` | `github.token` | GitHub token to list files
 
 
