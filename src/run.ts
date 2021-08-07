@@ -9,17 +9,19 @@ type Inputs = {
   token: string
 }
 
-export const run = async (inputs: Inputs): Promise<void> => {
+type Outputs = {
+  variables: Map<string, string>
+}
+
+export const run = async (inputs: Inputs): Promise<Outputs> => {
   if (github.context.eventName !== 'pull_request') {
+    core.info(`Received event ${github.context.eventName} and transform paths to wildcards`)
     return fallbackToWildcard(inputs)
   }
   return await handlePullRequest(inputs)
 }
 
-const handlePullRequest = async (inputs: Inputs): Promise<void> => {
-  const transform = parseTransform(inputs.transform)
-  core.info(`Parsed transform as\n${[...transform.entries()].map(([k, v]) => `${k} => ${v}`).join('\n')}`)
-
+const handlePullRequest = async (inputs: Inputs): Promise<Outputs> => {
   const octokit = github.getOctokit(inputs.token)
   //TODO: paginate
   core.info(`List files in the current pull request`)
@@ -30,44 +32,32 @@ const handlePullRequest = async (inputs: Inputs): Promise<void> => {
     per_page: 100,
   })
 
-  const files = listFiles.map((f) => f.filename)
+  const changedFiles = listFiles.map((f) => f.filename)
 
-  if (match.match(inputs.pathsAlways, files)) {
-    core.info(`Transform paths to wildcards because paths-always were matched`)
-    for (const [outputKey, pattern] of transform.entries()) {
-      const t = match.transformToWildcard(pattern)
-      core.setOutput(outputKey, t.join('\n'))
-      core.startGroup(`Set output ${outputKey}`)
-      core.info(t.join('\n'))
-      core.endGroup()
-    }
-    return
+  if (match.match(inputs.pathsAlways, changedFiles)) {
+    core.info(`paths-always matches to the changed files`)
+    return fallbackToWildcard(inputs)
   }
 
   core.info(`Transform paths`)
-  const groups = match.exec(inputs.paths, files)
-  for (const [outputKey, pattern] of transform.entries()) {
-    const t = match.transform(pattern, groups)
-    core.setOutput(outputKey, t.join('\n'))
-    core.startGroup(`Set output ${outputKey}`)
-    core.info(t.join('\n'))
-    core.endGroup()
+  const transform = parseTransform(inputs.transform)
+  const groups = match.exec(inputs.paths, changedFiles)
+  const outputVariables = new Map<string, string>()
+  for (const [k, v] of transform) {
+    const p = match.transform(v, groups)
+    outputVariables.set(k, p.join('\n'))
   }
+  return { variables: outputVariables }
 }
 
-const fallbackToWildcard = (inputs: Inputs): void => {
-  core.info(`Transform paths to wildcards due to event ${github.context.eventName}`)
-
+const fallbackToWildcard = (inputs: Inputs): Outputs => {
   const transform = parseTransform(inputs.transform)
-  core.info(`Parsed transform as\n${[...transform.entries()].map(([k, v]) => `${k} => ${v}`).join('\n')}`)
-
-  for (const [outputKey, pattern] of transform.entries()) {
-    const t = match.transformToWildcard(pattern)
-    core.setOutput(outputKey, t.join('\n'))
-    core.startGroup(`Set output ${outputKey}`)
-    core.info(t.join('\n'))
-    core.endGroup()
+  const outputVariables = new Map<string, string>()
+  for (const [k, v] of transform) {
+    const p = match.transformToWildcard(v)
+    outputVariables.set(k, p.join('\n'))
   }
+  return { variables: outputVariables }
 }
 
 const parseTransform = (transform: string[]): Map<string, string> => {
@@ -81,5 +71,6 @@ const parseTransform = (transform: string[]): Map<string, string> => {
     const v = t.substring(i + 1)
     m.set(k, v)
   }
+  core.info(`Parsed transform as\n${[...m].map(([k, v]) => `${k} => ${v}`).join('\n')}`)
   return m
 }
