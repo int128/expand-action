@@ -1,11 +1,13 @@
-# reduce-action [![ts](https://github.com/int128/reduce-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/reduce-action/actions/workflows/ts.yaml)
+# expand-action [![ts](https://github.com/int128/expand-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/expand-action/actions/workflows/ts.yaml)
 
-This is an action to generate a path pattern from changed files in a pull request.
+This is an action to expand path patterns by changed files in a pull request.
 
 
 ## Motivation
 
-This action is an alternative of `path` trigger for a monorepo (mono repository).
+### Background
+
+This action provides an alternative of `paths` trigger for a monorepo (mono repository).
 Typically a monorepo contains many modules, for example,
 
 ```
@@ -38,19 +40,79 @@ jobs:
       - run: make -C microservice1 test
 ```
 
-On the other hand, it would be nice to inspect crosscutting concern for all modules.
+### Problem to solve
+
+It often needs to inspect crosscutting concern against all modules.
 For example,
 
 - Policy test for Kubernetes manifests
 - Security test with common rules
 
-If there are many modules in a monorepo, it takes a long time to process all modules.
+It takes a long time to process all modules if a monorepo has many modules.
 
-This action reduces a number of modules to process in a monorepo.
-It generates paths based on changed files in a pull request.
+### Idea
+
+This action expands path patterns by changed files in a pull request.
+
+For example, if the following path patterns are given,
+
+```yaml
+paths: |
+  :service/manifest/**
+transform: |
+  :service/manifest/kustomization.yaml
+```
+
+and the following file is changed in a pull request,
+
+```
+microservice1/manifest/deployment.yaml
+```
+
+this action determines the path variable as follows:
+
+```
+":service" => "microservice1"
+```
+
+Finally this action expands the pattern as follows:
+
+```
+microservice1/manifest/kustomization.yaml
+```
+
+It reduces a number of modules to process in a workflow.
+
+### Consideration
+
+It may need to inspect all modules if a specific file is changed, such as a common policy.
+This action supports "fallback" path pattern.
+
+For example, if the following path patterns are given,
+
+```yaml
+paths: |
+  :service/manifest/**
+paths-always: |
+  conftest/**
+transform: |
+  :service/manifest/kustomization.yaml
+```
+
+and the following file is changed in a pull request,
+
+```
+conftest/policy/foo.rego
+```
+
+this action fallbacks to wildcard, that is, replaces a path variable with `*`, as follows:
+
+```
+*/manifest/kustomization.yaml
+```
 
 
-## Getting Started
+## Examples
 
 ### Usecase: build manifests against changed paths
 
@@ -66,35 +128,27 @@ clusters
     └── cluster-autoscaler
 ```
 
-You can generates paths from changed files in a pull request.
+To run `kustomize build` for changed components in a pull request:
 
 ```yaml
 jobs:
-  reduce:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: int128/reduce-action@v1
-        id: reduce
+      - uses: actions/checkout@v2
+      - uses: int128/expand-action@v1
+        id: expand
         with:
           paths: |
             clusters/:cluster/:component/**
           transform: |
             kustomization=clusters/:cluster/:component/kustomization.yaml
-    outputs:
-      kustomization: ${{ steps.reduce.outputs.kustomization }}
-
-  build:
-    needs:
-      - reduce
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
       - uses: int128/kustomize-action@v1
         with:
-          kustomization: ${{ needs.reduce.outputs.kustomization }}
+          kustomization: ${{ steps.expand.outputs.kustomization }}
 ```
 
-In this example, this action generates paths by the following rule:
+This action expands paths by the following rule:
 
 ```
 clusters/:cluster/:component/**
@@ -110,18 +164,16 @@ clusters/staging/cluster-autoscaler/**
 clusters/staging/cluster-autoscaler/kustomization.yaml
 ```
 
-and this action outputs path `clusters/staging/cluster-autoscaler/kustomization.yaml`.
-
-Finally, the next action runs kustomize build for the path.
+and finally this action sets an output to `clusters/staging/cluster-autoscaler/kustomization.yaml`.
 
 
 ## Inputs
 
 | Name | Default | Description
 |------|---------|------------
-| `paths` | required | paths to match
-| `paths-always` | empty | paths to fallback to wildcard
-| `transform` | required | paths to transform in form of `NAME=PATH`
+| `paths` | required | Paths to expand
+| `paths-always` | empty | If any path is changed, fallback to wildcard
+| `transform` | required | Paths in outputs in form of `NAME=PATH`
 | `token` | `github.token` | GitHub token to list files
 
 
