@@ -5,7 +5,7 @@ const main = async (): Promise<void> => {
   try {
     const outputs = await run({
       paths: core.getMultilineInput('paths', { required: true }),
-      pathsAlways: core.getMultilineInput('paths-always'),
+      pathsFallback: core.getMultilineInput('paths-fallback'),
       transform: parseTransform(core.getMultilineInput('transform', { required: true })),
       token: core.getInput('token', { required: true }),
     })
