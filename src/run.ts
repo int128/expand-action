@@ -10,20 +10,15 @@ type Inputs = {
 }
 
 export const run = async (inputs: Inputs): Promise<void> => {
+  if (github.context.eventName !== 'pull_request') {
+    return fallbackToWildcard(inputs)
+  }
+  return await handlePullRequest(inputs)
+}
+
+const handlePullRequest = async (inputs: Inputs): Promise<void> => {
   const transform = parseTransform(inputs.transform)
   core.info(`Parsed transform as\n${[...transform.entries()].map(([k, v]) => `${k} => ${v}`).join('\n')}`)
-
-  if (github.context.eventName !== 'pull_request') {
-    core.info(`Transform paths to wildcards due to event ${github.context.eventName}`)
-    for (const [outputKey, pattern] of transform.entries()) {
-      const t = match.transformToWildcard(pattern)
-      core.setOutput(outputKey, t.join('\n'))
-      core.startGroup(`Set output ${outputKey}`)
-      core.info(t.join('\n'))
-      core.endGroup()
-    }
-    return
-  }
 
   const octokit = github.getOctokit(inputs.token)
   //TODO: paginate
@@ -53,6 +48,21 @@ export const run = async (inputs: Inputs): Promise<void> => {
   const groups = match.exec(inputs.paths, files)
   for (const [outputKey, pattern] of transform.entries()) {
     const t = match.transform(pattern, groups)
+    core.setOutput(outputKey, t.join('\n'))
+    core.startGroup(`Set output ${outputKey}`)
+    core.info(t.join('\n'))
+    core.endGroup()
+  }
+}
+
+const fallbackToWildcard = (inputs: Inputs): void => {
+  core.info(`Transform paths to wildcards due to event ${github.context.eventName}`)
+
+  const transform = parseTransform(inputs.transform)
+  core.info(`Parsed transform as\n${[...transform.entries()].map(([k, v]) => `${k} => ${v}`).join('\n')}`)
+
+  for (const [outputKey, pattern] of transform.entries()) {
+    const t = match.transformToWildcard(pattern)
     core.setOutput(outputKey, t.join('\n'))
     core.startGroup(`Set output ${outputKey}`)
     core.info(t.join('\n'))
