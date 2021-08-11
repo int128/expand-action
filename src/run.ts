@@ -50,12 +50,17 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent): Promise<O
   core.info(`Received a list of ${changedFiles.length} files`)
 
   if (match.match(inputs.pathsFallback, changedFiles)) {
-    core.info(`paths-fallback matches to the changed files`)
+    core.info(`Fallback to wildcard because paths-fallback matches to the changed files`)
+    return fallbackToWildcard(inputs.outputsMap)
+  }
+
+  const groups = match.exec(inputs.paths, changedFiles)
+  if (groups.length === 0) {
+    core.info(`Fallback to wildcard because paths did not match to any changed files`)
     return fallbackToWildcard(inputs.outputsMap)
   }
 
   core.info(`Transform paths by the changed files`)
-  const groups = match.exec(inputs.paths, changedFiles)
   const map = new Map<string, string>()
   for (const [k, v] of inputs.outputsMap) {
     const p = match.transform(v, groups)
