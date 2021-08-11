@@ -50,7 +50,7 @@ For example,
 
 It takes a long time to process all modules if a monorepo has many modules.
 
-### Idea
+### Feature: Path variable expansion
 
 This action expands path patterns by changed files in a pull request.
 
@@ -83,10 +83,13 @@ microservice1/manifest/kustomization.yaml
 
 It reduces a number of modules to process in a workflow.
 
-### Consideration
+### Feature: Wildcard fallback
 
-It may need to inspect all modules if a specific file is changed, such as a common policy.
-This action supports "fallback" path pattern.
+This action may fallback to generate wildcard patterns when the following cases:
+
+- Any pattern in `paths` did not match
+- Any pattern in `paths-fallback` matched
+- Pull request contains more than 1,000 changed files
 
 For example, if the following path patterns are given,
 
@@ -105,11 +108,13 @@ and the following file is changed in a pull request,
 conftest/policy/foo.rego
 ```
 
-this action fallbacks to wildcard, that is, replaces a path variable with `*`, as follows:
+this action replaces all path variables with wildcard `*` as follows:
 
 ```
 */manifest/kustomization.yaml
 ```
+
+This allows inspection of all modules if a specific file such as a common policy is changed.
 
 
 ## Examples
