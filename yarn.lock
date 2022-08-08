@@ -959,10 +959,10 @@
   dependencies:
     "@octokit/openapi-types" "^11.2.0"
 
-"@octokit/webhooks-types@6.2.4":
-  version "6.2.4"
-  resolved "https://registry.yarnpkg.com/@octokit/webhooks-types/-/webhooks-types-6.2.4.tgz#fe386d1e4749ff93bb143907b9673eb1e4f01a30"
-  integrity sha512-MlumL1ClswnrebjNWmUFiHjEqpRl2T3Eh6j6R9mP2SNK7SjYw4tXGeCKHOyZiNpLjc5/1+P39BxwLN28zNn8iQ==
+"@octokit/webhooks-types@6.3.0":
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/@octokit/webhooks-types/-/webhooks-types-6.3.0.tgz#ccacafc08d4cfdc8bb430dc72df2d087bc392169"
+  integrity sha512-gawosm1WoJvtiDTBlyAARdQYQWH6D6Pcu/ZdVmxLb1SPiqJaMYPzrKY9VkWA9T4PhzyrMoGXBNesQULBb73LRw==
 
 "@sinclair/typebox@^0.23.3":
   version "0.23.5"
