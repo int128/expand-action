@@ -7,7 +7,7 @@ test('match against patterns', () => {
       'clusters/staging/cluster-autoscaler/helmfile.yaml',
       'clusters/staging/cluster-autoscaler/values.yaml',
       'clusters/production/coredns/deployment.yaml',
-    ]
+    ],
   )
   expect(m).toBeTruthy()
 })
@@ -19,7 +19,7 @@ test('exec against path variables', () => {
       'clusters/staging/cluster-autoscaler/helmfile.yaml',
       'clusters/staging/cluster-autoscaler/values.yaml',
       'clusters/production/coredns/deployment.yaml',
-    ]
+    ],
   )
   expect(m).toEqual([
     {
