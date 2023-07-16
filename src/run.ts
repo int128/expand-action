@@ -44,7 +44,7 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent): Promise<O
       pull_number: github.context.issue.number,
       per_page: 100,
     },
-    (r) => r.data
+    (r) => r.data,
   )
   const changedFiles = listFiles.map((f) => f.filename)
   core.info(`Received a list of ${changedFiles.length} files`)
