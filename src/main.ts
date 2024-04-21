@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { parseOutputs, run } from './run'
+import { parseOutputs, run } from './run.js'
 
 const main = async (): Promise<void> => {
   const outputs = await run({

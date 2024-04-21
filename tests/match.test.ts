@@ -1,4 +1,4 @@
-import { exec, transform, transformToWildcard } from '../src/match'
+import { exec, transform, transformToWildcard } from '../src/match.js'
 
 test('match against patterns', () => {
   const m = exec(
