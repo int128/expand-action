@@ -1,31 +1,30 @@
 import * as core from '@actions/core'
-import * as github from '@actions/github'
 import { PullRequestEvent } from '@octokit/webhooks-types'
 import * as match from './match.js'
+import { Context, Octokit } from './github.js'
 
 type Inputs = {
   paths: string[]
   pathsFallback: string[]
   outputsMap: Map<string, string>
-  token: string
 }
 
 type Outputs = {
   map: Map<string, string>
 }
 
-export const run = async (inputs: Inputs): Promise<Outputs> => {
-  core.info(`eventName: ${github.context.eventName}`)
+export const run = async (inputs: Inputs, context: Context, octokit: Octokit): Promise<Outputs> => {
+  core.info(`eventName: ${context.eventName}`)
   core.info(`outputs: ${JSON.stringify([...inputs.outputsMap], undefined, 2)}`)
 
-  if (github.context.eventName === 'pull_request') {
-    return await handlePullRequest(inputs, github.context.payload as PullRequestEvent)
+  if (context.eventName === 'pull_request') {
+    return await handlePullRequest(inputs, context.payload as PullRequestEvent, octokit)
   }
   core.info(`Fallback to wildcards`)
   return fallbackToWildcard(inputs.outputsMap)
 }
 
-const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent): Promise<Outputs> => {
+const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent, octokit: Octokit): Promise<Outputs> => {
   core.info(`${e.pull_request.changed_files} files are changed in the pull request`)
 
   // limit the max number of changed files to prevent GitHub API rate limit
@@ -35,13 +34,12 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent): Promise<O
   }
 
   core.info(`List files in the pull request`)
-  const octokit = github.getOctokit(inputs.token)
   const listFiles = await octokit.paginate(
     octokit.rest.pulls.listFiles,
     {
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      pull_number: github.context.issue.number,
+      owner: e.pull_request.base.repo.owner.login,
+      repo: e.pull_request.base.repo.name,
+      pull_number: e.pull_request.number,
       per_page: 100,
     },
     (r) => r.data,
