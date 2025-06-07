@@ -1,3 +1,4 @@
+import { test, expect } from 'vitest'
 import { exec, transform, transformToWildcard } from '../src/match.js'
 
 test('match against patterns', () => {
