@@ -1,6 +1,7 @@
+import { it, expect } from 'vitest'
 import { exec, transform, transformToWildcard } from '../src/match.js'
 
-test('match against patterns', () => {
+it('match against patterns', () => {
   const m = exec(
     ['clusters/:cluster/:component/**'],
     [
@@ -12,7 +13,7 @@ test('match against patterns', () => {
   expect(m).toBeTruthy()
 })
 
-test('exec against path variables', () => {
+it('exec against path variables', () => {
   const m = exec(
     ['clusters/:cluster/:component/**'],
     [
@@ -33,7 +34,7 @@ test('exec against path variables', () => {
   ])
 })
 
-test('transform paths', () => {
+it('transform paths', () => {
   const p = transform('clusters/:cluster/:component/kustomization.yaml', [
     {
       cluster: 'staging',
@@ -50,7 +51,7 @@ test('transform paths', () => {
   ])
 })
 
-test('transform paths with no group', () => {
+it('transform paths with no group', () => {
   const p = transformToWildcard('clusters/:cluster/:component/kustomization.yaml')
   expect(p).toStrictEqual(['clusters/*/*/kustomization.yaml'])
 })
