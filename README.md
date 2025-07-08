@@ -1,11 +1,8 @@
-# expand-action [![ts](https://github.com/int128/expand-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/expand-action/actions/workflows/ts.yaml)
+# glob-changed-files-action [![ts](https://github.com/int128/glob-changed-files-action/actions/workflows/ts.yaml/badge.svg)](https://github.com/int128/glob-changed-files-action/actions/workflows/ts.yaml)
 
 This is an action to expand path patterns by changed files in a pull request.
 
-
 ## Motivation
-
-### Background
 
 This action provides an alternative of `paths` trigger for a monorepo (mono repository).
 Typically a monorepo contains many modules, for example,
@@ -19,36 +16,14 @@ monorepo
 └── common-policy
 ```
 
-GitHub Actions provides `paths` trigger.
-In most cases, an owner of microservice creates a workflow for test or build.
-For example, a workflow for test of Go microservice is like,
-
-```yaml
-name: microservice1--test
-on:
-  pull_request:
-    paths:
-      - microservice1/**
-jobs:
-  lint:
-    steps:
-      - uses: actions/checkout@v2
-      - uses: golangci/golangci-lint-action@v2
-  test:
-    steps:
-      - uses: actions/checkout@v2
-      - run: make -C microservice1 test
-```
-
-### Problem to solve
-
-It often needs to inspect crosscutting concern against all modules.
+This action is useful to inspect crosscutting concern against all modules.
 For example,
 
 - Policy test for Kubernetes manifests
 - Security test with common rules
 
-It takes a long time to process all modules if a monorepo has many modules.
+If a monorepo has many modules, it takes a long time to process all modules.
+You can reduce the number of modules to process by this action.
 
 ### Feature: Path variable expansion
 
@@ -116,7 +91,6 @@ this action replaces all path variables with wildcard `*` as follows:
 
 This allows inspection of all modules if a specific file such as a common policy is changed.
 
-
 ## Examples
 
 ### Usecase: build manifests against changed paths
@@ -141,8 +115,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: int128/expand-action@v1
-        id: expand
+      - uses: int128/glob-changed-files-action@v1
+        id: glob-changed-files
         with:
           paths: |
             clusters/:cluster/:component/**
@@ -150,7 +124,7 @@ jobs:
             kustomization=clusters/:cluster/:component/kustomization.yaml
       - uses: int128/kustomize-action@v1
         with:
-          kustomization: ${{ steps.expand.outputs.kustomization }}
+          kustomization: ${{ steps.glob-changed-files.outputs.kustomization }}
 ```
 
 This action expands paths by the following rule:
@@ -171,17 +145,14 @@ clusters/staging/cluster-autoscaler/kustomization.yaml
 
 and finally this action sets an output to `clusters/staging/cluster-autoscaler/kustomization.yaml`.
 
-
 ## Inputs
 
-| Name | Default | Description
-|------|---------|------------
-| `paths` | required | Paths to expand
-| `paths-fallback` | empty | If any path is changed, fallback to wildcard
-| `outputs` | required | Paths to set into outputs in form of `NAME=PATH`
-| `token` | `github.token` | GitHub token to list files
-
-
+| Name             | Default        | Description                                                  |
+| ---------------- | -------------- | ------------------------------------------------------------ |
+| `paths`          | (required)     | Glob patterns (multiline)                                    |
+| `paths-fallback` | (empty)        | Glob patterns to fallback to wildcard (multiline)            |
+| `outputs`        | (required)     | Paths to set into outputs in form of `NAME=PATH` (multiline) |
+| `token`          | `github.token` | GitHub token to list the changed files                       |
 
 ## Outputs
 

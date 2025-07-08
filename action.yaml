@@ -1,17 +1,17 @@
-name: expand
-description: expand path patterns by changed files in a pull request
+name: glob-changed-files-action
+description: Action to expand glob patterns by changed files of pull request
 inputs:
   paths:
-    description: paths to expand (multiline)
+    description: Glob patterns (multiline)
     required: true
   paths-fallback:
-    description: paths to fallback to wildcard (multiline)
+    description: Glob patterns to fallback to wildcard (multiline)
     required: true
   outputs:
-    description: paths to set into outputs in form of NAME=PATH (multiline)
+    description: Paths to set into outputs in form of NAME=PATH (multiline)
     required: true
   token:
-    description: GitHub token to list files
+    description: GitHub token to list the changed files
     required: true
     default: ${{ github.token }}
 runs:

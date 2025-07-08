@@ -33,7 +33,8 @@ jobs:
       - run: pnpm build
 
       - uses: ./
-        id: expand
+        name: Run int128/glob-changed-files-action
+        id: glob-changed-files
         with:
           paths: |
             :dir/**
@@ -41,7 +42,7 @@ jobs:
             dir=:dir
       - run: |
           cat <<EOF
-          ${{ toJSON(steps.expand.outputs) }}
+          ${{ toJSON(steps.glob-changed-files.outputs) }}
           EOF
 
   generate:
