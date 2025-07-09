@@ -2,23 +2,11 @@ import { createHash } from 'crypto'
 
 export type Groups = { [key: string]: string | undefined }
 
-const computeGroupsKey = (g: Groups): string => {
-  const h = createHash('sha256')
-  for (const k of Object.keys(g)) {
-    const v = g[k]
-    h.write(k)
-    h.write('\0')
-    h.write(v)
-    h.write('\0')
-  }
-  return h.digest('hex')
-}
-
-export const match = (patterns: string[], files: string[]): boolean => {
+export const matchAny = (patterns: string[], changedFiles: string[]): boolean => {
   const regexps = patterns.map(compilePathToRegexp)
-  for (const f of files) {
+  for (const changedFile of changedFiles) {
     for (const re of regexps) {
-      if (re.test(f)) {
+      if (re.test(changedFile)) {
         return true
       }
     }
@@ -26,19 +14,31 @@ export const match = (patterns: string[], files: string[]): boolean => {
   return false
 }
 
-export const exec = (patterns: string[], files: string[]): Groups[] => {
+export const matchGroups = (patterns: string[], changedFiles: string[]): Groups[] => {
   const regexps = patterns.map(compilePathToRegexp)
-  const groups = new Map<string, Groups>()
-  for (const f of files) {
+  const groupsSet = new Map<string, Groups>()
+  for (const changedFile of changedFiles) {
     for (const re of regexps) {
-      const m = re.exec(f)
-      if (m?.groups !== undefined) {
-        const key = computeGroupsKey(m.groups)
-        groups.set(key, m.groups)
+      const matcher = re.exec(changedFile)
+      if (matcher?.groups !== undefined) {
+        const dedupeKey = computeKeyOfGroups(matcher.groups)
+        groupsSet.set(dedupeKey, matcher.groups)
       }
     }
   }
-  return [...groups.values()]
+  return [...groupsSet.values()]
+}
+
+const computeKeyOfGroups = (groups: Groups): string => {
+  const h = createHash('sha256')
+  for (const k of Object.keys(groups)) {
+    const v = groups[k]
+    h.write(k)
+    h.write('\0')
+    h.write(v)
+    h.write('\0')
+  }
+  return h.digest('hex')
 }
 
 const compilePathToRegexp = (s: string): RegExp => {
@@ -57,15 +57,15 @@ const compilePathToRegexp = (s: string): RegExp => {
   return new RegExp(`^${elements.join('/')}$`)
 }
 
-export const transform = (pattern: string, groups: Groups[]): string[] => {
+export const transform = (pattern: string, groupsSet: Groups[]): string[] => {
   const paths = new Set<string>()
-  for (const group of groups) {
+  for (const groups of groupsSet) {
     const path = pattern
       .split('/')
       .map((e): string => {
         if (e.startsWith(':')) {
           const k = e.substring(1)
-          const v = group[k]
+          const v = groups[k]
           if (v === undefined) {
             return '*'
           }
@@ -76,7 +76,7 @@ export const transform = (pattern: string, groups: Groups[]): string[] => {
       .join('/')
     paths.add(path)
   }
-  return [...paths.values()]
+  return [...paths]
 }
 
 export const transformToWildcard = (pattern: string): string[] => transform(pattern, [{}])

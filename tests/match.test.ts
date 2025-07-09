@@ -1,9 +1,9 @@
 import { it, expect, describe } from 'vitest'
-import { exec, transform, transformToWildcard } from '../src/match.js'
+import { Groups, matchAny, matchGroups, transform, transformToWildcard } from '../src/match.js'
 
-describe('exec', () => {
+describe('matchAny', () => {
   it('matches against patterns', () => {
-    const groups = exec(
+    const matched = matchAny(
       ['clusters/:cluster/:component/**'],
       [
         'clusters/staging/cluster-autoscaler/helmfile.yaml',
@@ -11,11 +11,13 @@ describe('exec', () => {
         'clusters/production/coredns/deployment.yaml',
       ],
     )
-    expect(groups).toBeTruthy()
+    expect(matched).toBe(true)
   })
+})
 
+describe('matchGroups', () => {
   it('matches against path variables', () => {
-    const groups = exec(
+    const groupsSet = matchGroups(
       ['clusters/:cluster/:component/**'],
       [
         'clusters/staging/cluster-autoscaler/helmfile.yaml',
@@ -23,7 +25,7 @@ describe('exec', () => {
         'clusters/production/coredns/deployment.yaml',
       ],
     )
-    expect(groups).toEqual([
+    expect(groupsSet).toEqual([
       {
         cluster: 'staging',
         component: 'cluster-autoscaler',
@@ -38,7 +40,7 @@ describe('exec', () => {
 
 describe('transform', () => {
   it('returns paths corresponding to groups', () => {
-    const groups = [
+    const groupsSet: Groups[] = [
       {
         cluster: 'staging',
         component: 'cluster-autoscaler',
@@ -48,7 +50,7 @@ describe('transform', () => {
         component: 'coredns',
       },
     ]
-    const paths = transform('clusters/:cluster/:component/kustomization.yaml', groups)
+    const paths = transform('clusters/:cluster/:component/kustomization.yaml', groupsSet)
     expect(paths).toStrictEqual([
       'clusters/staging/cluster-autoscaler/kustomization.yaml',
       'clusters/production/coredns/kustomization.yaml',
