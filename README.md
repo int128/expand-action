@@ -56,7 +56,21 @@ Finally this action expands the pattern as follows:
 microservice1/manifest/kustomization.yaml
 ```
 
-It reduces a number of modules to process in a workflow.
+A path variable can be defined by `:VARIABLE` in the patterns of `paths`.
+It can be used in `outputs` to set the output value.
+
+A path variable starts with a colon `:`, and contains alphanumeric characters.
+You can use a path variable in a path segment.
+For example,
+
+```yaml
+paths: |
+  .github/workflows/:workflow.yaml
+outputs: |
+  workflow=:workflow
+```
+
+This feature reduces a number of modules to process in a workflow.
 
 ### Feature: Wildcard fallback
 

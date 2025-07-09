@@ -92,6 +92,22 @@ describe('matchGroups', () => {
     ])
   })
 
+  it('matches a trailing path variable', () => {
+    const groupsSet = matchGroups(
+      ['.github/workflows/:workflow'],
+      ['.github/workflows/ci.yaml', '.github/workflows/deploy.yaml', '.github/workflows/test.yaml'],
+    )
+    expect(groupsSet).toEqual([{ workflow: 'ci.yaml' }, { workflow: 'deploy.yaml' }, { workflow: 'test.yaml' }])
+  })
+
+  it('matches a partial path variable', () => {
+    const groupsSet = matchGroups(
+      ['.github/workflows/:workflow.yaml'],
+      ['.github/workflows/ci.yaml', '.github/workflows/deploy.yaml', '.github/workflows/test.yaml'],
+    )
+    expect(groupsSet).toEqual([{ workflow: 'ci' }, { workflow: 'deploy' }, { workflow: 'test' }])
+  })
+
   it('returns empty array when no files match', () => {
     const groupsSet = matchGroups(['clusters/:cluster/:component/**'], ['src/main.ts', 'docs/README.md'])
     expect(groupsSet).toEqual([])
@@ -153,6 +169,26 @@ describe('transform', () => {
     expect(paths).toStrictEqual([
       'clusters/staging/cluster-autoscaler/kustomization.yaml',
       'clusters/production/coredns/kustomization.yaml',
+    ])
+  })
+
+  it('handles a trailing path variable', () => {
+    const groupsSet: Groups[] = [{ workflow: 'ci.yaml' }, { workflow: 'deploy.yaml' }, { workflow: 'test.yaml' }]
+    const paths = transform('.github/workflows/:workflow', groupsSet)
+    expect(paths).toStrictEqual([
+      '.github/workflows/ci.yaml',
+      '.github/workflows/deploy.yaml',
+      '.github/workflows/test.yaml',
+    ])
+  })
+
+  it('handles a partial path variable', () => {
+    const groupsSet: Groups[] = [{ workflow: 'ci' }, { workflow: 'deploy' }, { workflow: 'test' }]
+    const paths = transform('.github/workflows/:workflow.yaml', groupsSet)
+    expect(paths).toStrictEqual([
+      '.github/workflows/ci.yaml',
+      '.github/workflows/deploy.yaml',
+      '.github/workflows/test.yaml',
     ])
   })
 
