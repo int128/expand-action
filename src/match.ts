@@ -42,19 +42,14 @@ const computeKeyOfGroups = (groups: Groups): string => {
 }
 
 const compilePathToRegexp = (s: string): RegExp => {
-  const elements = s.split('/').map((e) => {
-    if (e.startsWith(':')) {
-      return `(?<${e.substring(1)}>[^/]+?)`
-    }
-    if (e === '*') {
-      return `[^/]+?`
-    }
-    if (e === '**') {
-      return `.+?`
-    }
-    return e
-  })
-  return new RegExp(`^${elements.join('/')}$`)
+  const pathSegments = s.split('/').map((pathSegment) =>
+    pathSegment
+      .replaceAll('.', '\\.')
+      .replaceAll('**', '.+?')
+      .replaceAll('*', '[^/]+?')
+      .replaceAll(/:([a-zA-Z0-9]+)/g, '(?<$1>[^/]+?)'),
+  )
+  return new RegExp(`^${pathSegments.join('/')}$`)
 }
 
 export const transform = (pattern: string, groupsSet: Groups[]): string[] => {
@@ -62,17 +57,15 @@ export const transform = (pattern: string, groupsSet: Groups[]): string[] => {
   for (const groups of groupsSet) {
     const path = pattern
       .split('/')
-      .map((e): string => {
-        if (e.startsWith(':')) {
-          const k = e.substring(1)
-          const v = groups[k]
-          if (v === undefined) {
+      .map((pathSegment) =>
+        pathSegment.replaceAll(/:([a-zA-Z0-9]+)/g, (_, variableKey: string): string => {
+          const variableValue = groups[variableKey]
+          if (variableValue === undefined) {
             return '*'
           }
-          return v
-        }
-        return e
-      })
+          return variableValue
+        }),
+      )
       .join('/')
     paths.add(path)
   }
