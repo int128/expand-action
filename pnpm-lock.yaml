@@ -12,7 +12,7 @@ importers:
         specifier: 1.11.1
         version: 1.11.1
       '@actions/glob':
-        specifier: ^0.5.0
+        specifier: 0.5.0
         version: 0.5.0
       '@octokit/action':
         specifier: 8.0.2
