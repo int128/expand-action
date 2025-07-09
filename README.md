@@ -155,7 +155,7 @@ Otherwise, it falls back to wildcard patterns.
 | Name             | Default        | Description                                                  |
 | ---------------- | -------------- | ------------------------------------------------------------ |
 | `paths`          | (required)     | Glob patterns (multiline)                                    |
-| `paths-fallback` | (empty)        | Glob patterns to fallback to wildcard (multiline)            |
+| `paths-fallback` | -              | Glob patterns to fallback to wildcard (multiline)            |
 | `outputs`        | (required)     | Paths to set into outputs in form of `NAME=PATH` (multiline) |
 | `token`          | `github.token` | GitHub token to list the changed files                       |
 
