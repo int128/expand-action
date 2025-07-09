@@ -43,9 +43,10 @@ jobs:
             :dir/**
           outputs: |
             dir=:dir
-      - run: test "$DIR"
+      - run: echo "$DIR"
         env:
           DIR: ${{ steps.glob-changed-files.outputs.dir }}
+
       - uses: ./
         name: Run int128/glob-changed-files-action
         id: glob-changed-files-json
@@ -55,6 +56,9 @@ jobs:
           outputs: |
             dir=:dir
           outputs-encoding: json
+      - run: jq . <<< "$DIR"
+        env:
+          DIR: ${{ steps.glob-changed-files-json.outputs.dir }}
 
   generate:
     runs-on: ubuntu-latest
