@@ -60,22 +60,6 @@ jobs:
         env:
           DIR: ${{ steps.glob-changed-files-json.outputs.dir }}
 
-      - uses: ./
-        name: Run int128/glob-changed-files-action
-        id: glob-changed-files-expand
-        with:
-          paths: |
-            .github/workflows/:workflow.yaml
-          paths-fallback: |
-            .github/workflows/ts.yaml
-          outputs: |
-            workflow=.github/workflows/:workflow.yaml
-          outputs-encoding: json
-          outputs-expand-wildcard: true
-      - run: jq . <<< "$WORKFLOWS"
-        env:
-          WORKFLOWS: ${{ steps.glob-changed-files-expand.outputs.workflow }}
-
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 10

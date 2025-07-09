@@ -1,7 +1,5 @@
 import * as core from '@actions/core'
-import * as glob from '@actions/glob'
 import * as match from './match.js'
-import * as path from 'path'
 import { Context } from './github.js'
 import { Octokit } from '@octokit/action'
 
@@ -9,11 +7,8 @@ type Inputs = {
   paths: string[]
   pathsFallback: string[]
   outputsMap: Map<string, string>
-  outputsEncoding: OutputsEncoding
-  outputsExpandWildcard: boolean
+  outputsEncoding: 'multiline' | 'json'
 }
-
-type OutputsEncoding = 'multiline' | 'json'
 
 type Outputs = {
   map: Map<string, string>
@@ -24,7 +19,15 @@ export const run = async (inputs: Inputs, context: Context, octokit: Octokit): P
   core.info(`outputs: ${JSON.stringify([...inputs.outputsMap], undefined, 2)}`)
 
   const variableMap = await matchChangedFiles(inputs, context, octokit)
-  const map = await encodeOutputMap(inputs, variableMap)
+
+  const map = new Map<string, string>()
+  for (const [key, paths] of variableMap) {
+    if (inputs.outputsEncoding === 'json') {
+      map.set(key, JSON.stringify(paths))
+    } else {
+      map.set(key, paths.join('\n'))
+    }
+  }
   return { map }
 }
 
@@ -84,33 +87,4 @@ const fallbackToWildcard = (outputsMap: Map<string, string>): VariableMap => {
     variableMap.set(key, paths)
   }
   return variableMap
-}
-
-const encodeOutputMap = async (inputs: Inputs, variableMap: VariableMap) => {
-  const map = new Map<string, string>()
-  for (const [key, paths] of variableMap) {
-    let expandedPaths = paths
-    if (inputs.outputsExpandWildcard) {
-      core.info(`Expanding output ${key}: ${paths.join(', ')}`)
-      expandedPaths = await expandOutputPaths(paths)
-    }
-    map.set(key, encodeOutputPaths(expandedPaths, inputs.outputsEncoding))
-  }
-  return map
-}
-
-const expandOutputPaths = async (paths: string[]): Promise<string[]> => {
-  const globber = await glob.create(paths.join('\n'), {
-    followSymbolicLinks: false,
-    matchDirectories: false,
-  })
-  const globbedPaths = await globber.glob()
-  return globbedPaths.map((fullPath) => path.relative(process.cwd(), fullPath))
-}
-
-const encodeOutputPaths = (paths: string[], encoding: OutputsEncoding): string => {
-  if (encoding === 'json') {
-    return JSON.stringify(paths)
-  }
-  return paths.join('\n')
 }

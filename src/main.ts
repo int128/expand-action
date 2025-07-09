@@ -9,7 +9,6 @@ const main = async (): Promise<void> => {
       pathsFallback: core.getMultilineInput('paths-fallback'),
       outputsMap: parseOutputs(core.getMultilineInput('outputs', { required: true })),
       outputsEncoding: parseOutputsEncoding(core.getInput('outputs-encoding', { required: true })),
-      outputsExpandWildcard: core.getBooleanInput('outputs-expand-wildcard', { required: true }),
     },
     await getContext(),
     getOctokit(),
