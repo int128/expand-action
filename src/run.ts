@@ -26,24 +26,26 @@ export const run = async (inputs: Inputs, context: Context, octokit: Octokit): P
   const variableMap = await matchChangedFiles(inputs, context, octokit)
   const map = new Map<string, string>()
   for (const [key, paths] of variableMap) {
-    map.set(key, await encodeOutputValue(paths, inputs.outputsEncoding, inputs.outputsExpandWildcard))
+    let expandedPaths = paths
+    if (inputs.outputsExpandWildcard) {
+      core.info(`Expanding output ${key}: ${paths.join(', ')}`)
+      expandedPaths = await expandOutputPaths(paths)
+    }
+    map.set(key, encodeOutputPaths(expandedPaths, inputs.outputsEncoding))
   }
   return { map }
 }
 
-const encodeOutputValue = async (
-  paths: string[],
-  encoding: OutputsEncoding,
-  expandWildcard: boolean,
-): Promise<string> => {
-  if (expandWildcard) {
-    const globber = await glob.create(paths.join('\n'), {
-      followSymbolicLinks: false,
-      matchDirectories: false,
-    })
-    const globbedPaths = await globber.glob()
-    paths = globbedPaths.map((fullPath) => path.relative(process.cwd(), fullPath))
-  }
+const expandOutputPaths = async (paths: string[]): Promise<string[]> => {
+  const globber = await glob.create(paths.join('\n'), {
+    followSymbolicLinks: false,
+    matchDirectories: false,
+  })
+  const globbedPaths = await globber.glob()
+  return globbedPaths.map((fullPath) => path.relative(process.cwd(), fullPath))
+}
+
+const encodeOutputPaths = (paths: string[], encoding: OutputsEncoding): string => {
   if (encoding === 'json') {
     return JSON.stringify(paths)
   }
