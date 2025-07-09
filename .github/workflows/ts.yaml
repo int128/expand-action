@@ -18,6 +18,9 @@ on:
       - '*.yaml'
       - .github/workflows/ts.yaml
 
+defaults:
+  run:
+    shell: bash
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -40,10 +43,18 @@ jobs:
             :dir/**
           outputs: |
             dir=:dir
-      - run: |
-          cat <<EOF
-          ${{ toJSON(steps.glob-changed-files.outputs) }}
-          EOF
+      - run: test "$DIR"
+        env:
+          DIR: ${{ steps.glob-changed-files.outputs.dir }}
+      - uses: ./
+        name: Run int128/glob-changed-files-action
+        id: glob-changed-files-json
+        with:
+          paths: |
+            :dir/**
+          outputs: |
+            dir=:dir
+          outputs-encoding: json
 
   generate:
     runs-on: ubuntu-latest

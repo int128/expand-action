@@ -8,6 +8,7 @@ const main = async (): Promise<void> => {
       paths: core.getMultilineInput('paths', { required: true }),
       pathsFallback: core.getMultilineInput('paths-fallback'),
       outputsMap: parseOutputs(core.getMultilineInput('outputs', { required: true })),
+      outputsEncoding: parseOutputsEncoding(core.getInput('outputs-encoding', { required: true })),
     },
     await getContext(),
     getOctokit(),
@@ -32,6 +33,16 @@ const parseOutputs = (outputs: string[]): Map<string, string> => {
     map.set(k, v)
   }
   return map
+}
+
+const parseOutputsEncoding = (encoding: string): 'multiline' | 'json' => {
+  if (encoding === 'multiline') {
+    return 'multiline'
+  }
+  if (encoding === 'json') {
+    return 'json'
+  }
+  throw new Error(`outputs-encoding must be either 'multiline' or 'json'`)
 }
 
 main().catch((e: Error) => {
