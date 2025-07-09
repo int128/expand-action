@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
 import { PullRequestEvent } from '@octokit/webhooks-types'
 import * as match from './match.js'
-import { Context, Octokit } from './github.js'
+import { Context } from './github.js'
+import { Octokit } from '@octokit/action'
 
 type Inputs = {
   paths: string[]
