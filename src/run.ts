@@ -17,20 +17,18 @@ export const run = async (inputs: Inputs, context: Context, octokit: Octokit): P
   core.info(`eventName: ${context.eventName}`)
   core.info(`outputs: ${JSON.stringify([...inputs.outputsMap], undefined, 2)}`)
 
-  const variablesMap = await matchChangedFiles(inputs, context, octokit)
+  const variableMap = await matchChangedFiles(inputs, context, octokit)
 
   const map = new Map<string, string>()
-  for (const [key, paths] of variablesMap) {
+  for (const [key, paths] of variableMap) {
     map.set(key, paths.join('\n'))
   }
   return { map }
 }
 
-const matchChangedFiles = async (
-  inputs: Inputs,
-  context: Context,
-  octokit: Octokit,
-): Promise<Map<string, string[]>> => {
+type VariableMap = Map<string, string[]>
+
+const matchChangedFiles = async (inputs: Inputs, context: Context, octokit: Octokit): Promise<VariableMap> => {
   if (!('pull_request' in context.payload && 'number' in context.payload)) {
     core.info(`Fallback to wildcard because not pull_request event`)
     return fallbackToWildcard(inputs.outputsMap)
@@ -69,21 +67,21 @@ const matchChangedFiles = async (
   }
 
   core.info(`Transform paths by the changed files`)
-  const variablesMap = new Map<string, string[]>()
+  const variableMap = new Map<string, string[]>()
   for (const [key, pattern] of inputs.outputsMap) {
     const paths = match.transform(pattern, groups)
-    variablesMap.set(key, paths)
+    variableMap.set(key, paths)
   }
-  return variablesMap
+  return variableMap
 }
 
-const fallbackToWildcard = (outputsMap: Map<string, string>): Map<string, string[]> => {
-  const variablesMap = new Map<string, string[]>()
+const fallbackToWildcard = (outputsMap: Map<string, string>): VariableMap => {
+  const variableMap = new Map<string, string[]>()
   for (const [key, pattern] of outputsMap) {
     const paths = match.transformToWildcard(pattern)
-    variablesMap.set(key, paths)
+    variableMap.set(key, paths)
   }
-  return variablesMap
+  return variableMap
 }
 
 export const parseOutputs = (outputs: string[]): Map<string, string> => {
