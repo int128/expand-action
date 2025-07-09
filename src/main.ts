@@ -9,8 +9,8 @@ const main = async (): Promise<void> => {
       pathsFallback: core.getMultilineInput('paths-fallback'),
       outputsMap: parseOutputs(core.getMultilineInput('outputs', { required: true })),
     },
-    getContext(),
-    getOctokit(core.getInput('token', { required: true })),
+    await getContext(),
+    getOctokit(),
   )
   for (const [k, v] of outputs.map) {
     core.startGroup(`Set output ${k}`)
