@@ -7,6 +7,7 @@ type Inputs = {
   paths: string[]
   pathsFallback: string[]
   outputsMap: Map<string, string>
+  outputsEncoding: 'multiline' | 'json'
 }
 
 type Outputs = {
@@ -21,7 +22,11 @@ export const run = async (inputs: Inputs, context: Context, octokit: Octokit): P
 
   const map = new Map<string, string>()
   for (const [key, paths] of variableMap) {
-    map.set(key, paths.join('\n'))
+    if (inputs.outputsEncoding === 'json') {
+      map.set(key, JSON.stringify(paths))
+    } else {
+      map.set(key, paths.join('\n'))
+    }
   }
   return { map }
 }
