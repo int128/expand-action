@@ -145,7 +145,12 @@ clusters/staging/cluster-autoscaler/kustomization.yaml
 
 and finally this action sets an output to `clusters/staging/cluster-autoscaler/kustomization.yaml`.
 
-## Inputs
+## Specification
+
+When this action is run on a `pull_request` or `pull_request_target` event, it inspects the changed files in the pull request.
+Otherwise, it falls back to wildcard patterns.
+
+### Inputs
 
 | Name             | Default        | Description                                                  |
 | ---------------- | -------------- | ------------------------------------------------------------ |
@@ -154,6 +159,6 @@ and finally this action sets an output to `clusters/staging/cluster-autoscaler/k
 | `outputs`        | (required)     | Paths to set into outputs in form of `NAME=PATH` (multiline) |
 | `token`          | `github.token` | GitHub token to list the changed files                       |
 
-## Outputs
+### Outputs
 
 This action sets the names defined by `outputs` in inputs.
