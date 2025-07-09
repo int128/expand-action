@@ -14,7 +14,7 @@ inputs:
     description: Encoding of outputs, either multiline or json
     required: true
     default: multiline
-  expand-wildcard:
+  outputs-expand-wildcard:
     description: If true, expand wildcard patterns of outputs
     required: false
     default: 'false'

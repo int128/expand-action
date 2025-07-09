@@ -10,7 +10,7 @@ type Inputs = {
   pathsFallback: string[]
   outputsMap: Map<string, string>
   outputsEncoding: OutputsEncoding
-  expandWildcard: boolean
+  outputsExpandWildcard: boolean
 }
 
 type OutputsEncoding = 'multiline' | 'json'
@@ -26,7 +26,7 @@ export const run = async (inputs: Inputs, context: Context, octokit: Octokit): P
   const variableMap = await matchChangedFiles(inputs, context, octokit)
   const map = new Map<string, string>()
   for (const [key, paths] of variableMap) {
-    map.set(key, await encodeOutputValue(paths, inputs.outputsEncoding, inputs.expandWildcard))
+    map.set(key, await encodeOutputValue(paths, inputs.outputsEncoding, inputs.outputsExpandWildcard))
   }
   return { map }
 }
@@ -37,22 +37,17 @@ const encodeOutputValue = async (
   expandWildcard: boolean,
 ): Promise<string> => {
   if (expandWildcard) {
-    paths = await expandOutputPaths(paths)
+    const globber = await glob.create(paths.join('\n'), {
+      followSymbolicLinks: false,
+      matchDirectories: false,
+    })
+    const globbedPaths = await globber.glob()
+    paths = globbedPaths.map((fullPath) => path.relative(process.cwd(), fullPath))
   }
   if (encoding === 'json') {
     return JSON.stringify(paths)
   }
   return paths.join('\n')
-}
-
-const expandOutputPaths = async (paths: string[]): Promise<string[]> => {
-  const globber = await glob.create(paths.join('\n'), { followSymbolicLinks: false, matchDirectories: false })
-  const expandedPaths: string[] = []
-  for await (const fullPath of globber.globGenerator()) {
-    const relativePath = path.relative(process.cwd(), fullPath)
-    expandedPaths.push(relativePath)
-  }
-  return expandedPaths
 }
 
 type VariableMap = Map<string, string[]>

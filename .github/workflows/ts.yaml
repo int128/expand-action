@@ -71,7 +71,7 @@ jobs:
           outputs: |
             workflow=.github/workflows/:workflow.yaml
           outputs-encoding: json
-          expand-wildcard: true
+          outputs-expand-wildcard: true
       - run: jq . <<< "$WORKFLOWS"
         env:
           WORKFLOWS: ${{ steps.glob-changed-files-expand.outputs.workflow }}
