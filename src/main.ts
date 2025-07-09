@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { parseOutputs, run } from './run.js'
+import { run } from './run.js'
 import { getContext, getOctokit } from './github.js'
 
 const main = async (): Promise<void> => {
@@ -18,6 +18,20 @@ const main = async (): Promise<void> => {
     core.info(v)
     core.endGroup()
   }
+}
+
+const parseOutputs = (outputs: string[]): Map<string, string> => {
+  const map = new Map<string, string>()
+  for (const entry of outputs) {
+    const i = entry.indexOf('=')
+    if (i < 0) {
+      throw new Error(`outputs must be in form of NAME=PATH but was ${entry}`)
+    }
+    const k = entry.substring(0, i)
+    const v = entry.substring(i + 1)
+    map.set(k, v)
+  }
+  return map
 }
 
 main().catch((e: Error) => {

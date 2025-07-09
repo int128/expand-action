@@ -83,17 +83,3 @@ const fallbackToWildcard = (outputsMap: Map<string, string>): VariableMap => {
   }
   return variableMap
 }
-
-export const parseOutputs = (outputs: string[]): Map<string, string> => {
-  const m = new Map<string, string>()
-  for (const t of outputs) {
-    const i = t.indexOf('=')
-    if (i < 0) {
-      throw new Error(`outputs must be in form of NAME=PATH but was ${t}`)
-    }
-    const k = t.substring(0, i)
-    const v = t.substring(i + 1)
-    m.set(k, v)
-  }
-  return m
-}
