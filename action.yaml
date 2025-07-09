@@ -14,10 +14,6 @@ inputs:
     description: Encoding of outputs, either multiline or json
     required: true
     default: multiline
-  outputs-expand-wildcard:
-    description: If true, expand wildcard patterns of outputs
-    required: false
-    default: 'false'
   token:
     description: GitHub token to list the changed files
     required: true
