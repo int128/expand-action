@@ -172,6 +172,7 @@ Otherwise, it falls back to wildcard patterns.
 | `paths-fallback`   | -              | Glob patterns to fallback to wildcard (multiline)            |
 | `outputs`          | (required)     | Paths to set into outputs in form of `NAME=PATH` (multiline) |
 | `outputs-encoding` | `multiline`    | Encoding of outputs, either `multiline` or `json`            |
+| `expand-wildcard`  | `false`        | If true, expand wildcard patterns of outputs                 |
 | `token`            | `github.token` | GitHub token to list the changed files                       |
 
 ### Outputs

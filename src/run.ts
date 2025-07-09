@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
+import * as glob from '@actions/glob'
 import * as match from './match.js'
+import * as path from 'path'
 import { Context } from './github.js'
 import { Octokit } from '@octokit/action'
 
@@ -7,8 +9,11 @@ type Inputs = {
   paths: string[]
   pathsFallback: string[]
   outputsMap: Map<string, string>
-  outputsEncoding: 'multiline' | 'json'
+  outputsEncoding: OutputsEncoding
+  expandWildcard: boolean
 }
+
+type OutputsEncoding = 'multiline' | 'json'
 
 type Outputs = {
   map: Map<string, string>
@@ -19,16 +24,35 @@ export const run = async (inputs: Inputs, context: Context, octokit: Octokit): P
   core.info(`outputs: ${JSON.stringify([...inputs.outputsMap], undefined, 2)}`)
 
   const variableMap = await matchChangedFiles(inputs, context, octokit)
-
   const map = new Map<string, string>()
   for (const [key, paths] of variableMap) {
-    if (inputs.outputsEncoding === 'json') {
-      map.set(key, JSON.stringify(paths))
-    } else {
-      map.set(key, paths.join('\n'))
-    }
+    map.set(key, await encodeOutputValue(paths, inputs.outputsEncoding, inputs.expandWildcard))
   }
   return { map }
+}
+
+const encodeOutputValue = async (
+  paths: string[],
+  encoding: OutputsEncoding,
+  expandWildcard: boolean,
+): Promise<string> => {
+  if (expandWildcard) {
+    paths = await expandOutputPaths(paths)
+  }
+  if (encoding === 'json') {
+    return JSON.stringify(paths)
+  }
+  return paths.join('\n')
+}
+
+const expandOutputPaths = async (paths: string[]): Promise<string[]> => {
+  const globber = await glob.create(paths.join('\n'), { followSymbolicLinks: false, matchDirectories: false })
+  const expandedPaths: string[] = []
+  for await (const fullPath of globber.globGenerator()) {
+    const relativePath = path.relative(process.cwd(), fullPath)
+    expandedPaths.push(relativePath)
+  }
+  return expandedPaths
 }
 
 type VariableMap = Map<string, string[]>
