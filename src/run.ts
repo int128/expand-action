@@ -1,5 +1,4 @@
 import * as core from '@actions/core'
-import { PullRequestEvent } from '@octokit/webhooks-types'
 import * as match from './match.js'
 import { Context } from './github.js'
 import { Octokit } from '@octokit/action'
@@ -18,18 +17,28 @@ export const run = async (inputs: Inputs, context: Context, octokit: Octokit): P
   core.info(`eventName: ${context.eventName}`)
   core.info(`outputs: ${JSON.stringify([...inputs.outputsMap], undefined, 2)}`)
 
-  if ('pull_request' in context.payload && 'number' in context.payload) {
-    return await handlePullRequest(inputs, context.payload, octokit)
+  const variablesMap = await matchChangedFiles(inputs, context, octokit)
+
+  const map = new Map<string, string>()
+  for (const [key, paths] of variablesMap) {
+    map.set(key, paths.join('\n'))
   }
-  core.info(`Fallback to wildcards`)
-  return fallbackToWildcard(inputs.outputsMap)
+  return { map }
 }
 
-const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent, octokit: Octokit): Promise<Outputs> => {
-  core.info(`${e.pull_request.changed_files} files are changed in the pull request`)
+const matchChangedFiles = async (
+  inputs: Inputs,
+  context: Context,
+  octokit: Octokit,
+): Promise<Map<string, string[]>> => {
+  if (!('pull_request' in context.payload && 'number' in context.payload)) {
+    core.info(`Fallback to wildcard because not pull_request event`)
+    return fallbackToWildcard(inputs.outputsMap)
+  }
 
-  // limit the max number of changed files to prevent GitHub API rate limit
-  if (e.pull_request.changed_files > 1000) {
+  // Limit the max number of changed files to prevent GitHub API rate limit
+  core.info(`${context.payload.pull_request.changed_files} files are changed in the pull request`)
+  if (context.payload.pull_request.changed_files > 1000) {
     core.info(`Fallback to wildcards due to too many changed files`)
     return fallbackToWildcard(inputs.outputsMap)
   }
@@ -38,9 +47,9 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent, octokit: O
   const listFiles = await octokit.paginate(
     octokit.rest.pulls.listFiles,
     {
-      owner: e.pull_request.base.repo.owner.login,
-      repo: e.pull_request.base.repo.name,
-      pull_number: e.pull_request.number,
+      owner: context.payload.pull_request.base.repo.owner.login,
+      repo: context.payload.pull_request.base.repo.name,
+      pull_number: context.payload.pull_request.number,
       per_page: 100,
     },
     (r) => r.data,
@@ -60,21 +69,21 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent, octokit: O
   }
 
   core.info(`Transform paths by the changed files`)
-  const map = new Map<string, string>()
-  for (const [k, v] of inputs.outputsMap) {
-    const p = match.transform(v, groups)
-    map.set(k, p.join('\n'))
+  const variablesMap = new Map<string, string[]>()
+  for (const [key, pattern] of inputs.outputsMap) {
+    const paths = match.transform(pattern, groups)
+    variablesMap.set(key, paths)
   }
-  return { map }
+  return variablesMap
 }
 
-const fallbackToWildcard = (outputsMap: Map<string, string>): Outputs => {
-  const map = new Map<string, string>()
-  for (const [k, v] of outputsMap) {
-    const p = match.transformToWildcard(v)
-    map.set(k, p.join('\n'))
+const fallbackToWildcard = (outputsMap: Map<string, string>): Map<string, string[]> => {
+  const variablesMap = new Map<string, string[]>()
+  for (const [key, pattern] of outputsMap) {
+    const paths = match.transformToWildcard(pattern)
+    variablesMap.set(key, paths)
   }
-  return { map }
+  return variablesMap
 }
 
 export const parseOutputs = (outputs: string[]): Map<string, string> => {
