@@ -1,9 +1,9 @@
 import { it, expect, describe } from 'vitest'
-import { matchGroups, transform, transformToWildcard } from '../src/match.js'
+import { matchAny, matchGroups, transform, transformToWildcard } from '../src/match.js'
 
-describe('matchGroups', () => {
+describe('matchAny', () => {
   it('matches against patterns', () => {
-    const groups = matchGroups(
+    const groups = matchAny(
       ['clusters/:cluster/:component/**'],
       [
         'clusters/staging/cluster-autoscaler/helmfile.yaml',
@@ -13,7 +13,9 @@ describe('matchGroups', () => {
     )
     expect(groups).toBeTruthy()
   })
+})
 
+describe('matchGroups', () => {
   it('matches against path variables', () => {
     const groups = matchGroups(
       ['clusters/:cluster/:component/**'],
