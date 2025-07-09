@@ -48,12 +48,12 @@ const handlePullRequest = async (inputs: Inputs, e: PullRequestEvent, octokit: O
   const changedFiles = listFiles.map((f) => f.filename)
   core.info(`Received a list of ${changedFiles.length} files`)
 
-  if (match.match(inputs.pathsFallback, changedFiles)) {
+  if (match.matchAny(inputs.pathsFallback, changedFiles)) {
     core.info(`Fallback to wildcard because paths-fallback matches to the changed files`)
     return fallbackToWildcard(inputs.outputsMap)
   }
 
-  const groups = match.exec(inputs.paths, changedFiles)
+  const groups = match.matchGroups(inputs.paths, changedFiles)
   if (groups.length === 0) {
     core.info(`Fallback to wildcard because paths did not match to any changed files`)
     return fallbackToWildcard(inputs.outputsMap)
