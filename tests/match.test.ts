@@ -1,57 +1,64 @@
-import { it, expect } from 'vitest'
+import { it, expect, describe } from 'vitest'
 import { exec, transform, transformToWildcard } from '../src/match.js'
 
-it('match against patterns', () => {
-  const m = exec(
-    ['clusters/:cluster/:component/**'],
-    [
-      'clusters/staging/cluster-autoscaler/helmfile.yaml',
-      'clusters/staging/cluster-autoscaler/values.yaml',
-      'clusters/production/coredns/deployment.yaml',
-    ],
-  )
-  expect(m).toBeTruthy()
+describe('exec', () => {
+  it('matches against patterns', () => {
+    const groups = exec(
+      ['clusters/:cluster/:component/**'],
+      [
+        'clusters/staging/cluster-autoscaler/helmfile.yaml',
+        'clusters/staging/cluster-autoscaler/values.yaml',
+        'clusters/production/coredns/deployment.yaml',
+      ],
+    )
+    expect(groups).toBeTruthy()
+  })
+
+  it('matches against path variables', () => {
+    const groups = exec(
+      ['clusters/:cluster/:component/**'],
+      [
+        'clusters/staging/cluster-autoscaler/helmfile.yaml',
+        'clusters/staging/cluster-autoscaler/values.yaml',
+        'clusters/production/coredns/deployment.yaml',
+      ],
+    )
+    expect(groups).toEqual([
+      {
+        cluster: 'staging',
+        component: 'cluster-autoscaler',
+      },
+      {
+        cluster: 'production',
+        component: 'coredns',
+      },
+    ])
+  })
 })
 
-it('exec against path variables', () => {
-  const m = exec(
-    ['clusters/:cluster/:component/**'],
-    [
-      'clusters/staging/cluster-autoscaler/helmfile.yaml',
-      'clusters/staging/cluster-autoscaler/values.yaml',
-      'clusters/production/coredns/deployment.yaml',
-    ],
-  )
-  expect(m).toEqual([
-    {
-      cluster: 'staging',
-      component: 'cluster-autoscaler',
-    },
-    {
-      cluster: 'production',
-      component: 'coredns',
-    },
-  ])
+describe('transform', () => {
+  it('returns paths corresponding to groups', () => {
+    const groups = [
+      {
+        cluster: 'staging',
+        component: 'cluster-autoscaler',
+      },
+      {
+        cluster: 'production',
+        component: 'coredns',
+      },
+    ]
+    const paths = transform('clusters/:cluster/:component/kustomization.yaml', groups)
+    expect(paths).toStrictEqual([
+      'clusters/staging/cluster-autoscaler/kustomization.yaml',
+      'clusters/production/coredns/kustomization.yaml',
+    ])
+  })
 })
 
-it('transform paths', () => {
-  const p = transform('clusters/:cluster/:component/kustomization.yaml', [
-    {
-      cluster: 'staging',
-      component: 'cluster-autoscaler',
-    },
-    {
-      cluster: 'production',
-      component: 'coredns',
-    },
-  ])
-  expect(p).toStrictEqual([
-    'clusters/staging/cluster-autoscaler/kustomization.yaml',
-    'clusters/production/coredns/kustomization.yaml',
-  ])
-})
-
-it('transform paths with no group', () => {
-  const p = transformToWildcard('clusters/:cluster/:component/kustomization.yaml')
-  expect(p).toStrictEqual(['clusters/*/*/kustomization.yaml'])
+describe('transformToWildcard', () => {
+  it('returns a wildcard pattern', () => {
+    const paths = transformToWildcard('clusters/:cluster/:component/kustomization.yaml')
+    expect(paths).toStrictEqual(['clusters/*/*/kustomization.yaml'])
+  })
 })
